@@ -189,7 +189,7 @@ app.registerExtension({
       }
       if (
         evt.dataTransfer.files.length &&
-        evt.dataTransfer.files[0].type === "image/png"
+        ["image/png", "image/webp"].includes(evt.dataTransfer.files[0].type)
       ) {
         let file = evt.dataTransfer.files[0];
         const removeExt = (f) => {
