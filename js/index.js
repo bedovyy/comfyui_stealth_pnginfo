@@ -187,11 +187,14 @@ app.registerExtension({
       if (n && n.onDragDrop && (await n.onDragDrop(evt))) {
         return;
       }
+      // Dragging from Chrome->Firefox there is a file but its a bmp, so ignore that
+      if (!event.dataTransfer) return
+      let file;
       if (
         evt.dataTransfer.files.length &&
         ["image/png", "image/webp"].includes(evt.dataTransfer.files[0].type)
       ) {
-        let file = evt.dataTransfer.files[0];
+        file = evt.dataTransfer.files[0];
         const removeExt = (f) => {
           if (!f) return f;
           const p = f.lastIndexOf(".");
@@ -252,12 +255,13 @@ app.registerExtension({
           return;
         }
       }
-      
+
+      // TODO: evt.dataTransfer.types and evt.dataTransfer.getData should be stored before loadImage
       if (
-        evt.dataTransfer.files.length &&
-        evt.dataTransfer.files[0].type !== 'image/bmp'
+        file &&
+        file.type !== 'image/bmp'
       ) {
-        await app.handleFile(evt.dataTransfer.files[0])
+        await app.handleFile(file)
       } else {
         // Try loading the first URI in the transfer list
         const validTypes = ['text/uri-list', 'text/x-moz-url']
@@ -267,7 +271,8 @@ app.registerExtension({
         if (match) {
           const uri = evt.dataTransfer.getData(match)?.split('\n')?.[0]
           if (uri) {
-            await app.handleFile(await (await fetch(uri)).blob())
+              const blob = await (await fetch(uri)).blob()
+              await app.handleFile(new File([blob], uri, { type: blob.type }))
           }
         }
       }
